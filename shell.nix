@@ -4,5 +4,6 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     # Dependencies
     elmPackages.elm
+    elmPackages.elm-format
   ];
 }
