@@ -1,30 +1,45 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Browser
-import Html exposing (div, input, label, p, text)
+import Html exposing (Html, div, input, label, p, text)
 import Html.Attributes exposing (for, name, type_)
+import Task
+import Time exposing (Posix)
 
 
-type alias YourBirthday =
-    { name : String, birthday : Maybe String }
+type alias YourAge =
+    { name : String, birthday : Maybe Posix, now : Posix }
 
 
-main : Program () YourBirthday msg
+type Msg
+    = UpdateCurrentTime Posix
+    | UpdateName
+    | UpdateBirthday
+
+
+main : Program () YourAge Msg
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.element { init = init, subscriptions = subscriptions, update = update, view = view }
 
 
-init : YourBirthday
-init =
-    { name = "", birthday = Nothing }
+init : () -> ( YourAge, Cmd Msg )
+init _ =
+    ( { name = "", birthday = Nothing, now = Time.millisToPosix 0 }
+    , Task.perform UpdateCurrentTime Time.now
+    )
 
 
-update : a -> b -> b
+subscriptions : YourAge -> Sub Msg
+subscriptions _ =
+    Time.every 1000 UpdateCurrentTime
+
+
+update : a -> YourAge -> ( YourAge, Cmd msg )
 update _ yb =
-    yb
+    ( yb, Cmd.none )
 
 
-view : YourBirthday -> Html.Html msg
+view : YourAge -> Html.Html msg
 view model =
     let
         form =
@@ -34,41 +49,12 @@ view model =
             , label [ for "birthday" ] [ text "Birthday" ]
             , input [ type_ "date", name "birthday" ] []
             ]
-
-        years =
-            ""
-
-        months =
-            ""
-
-        days =
-            ""
-
-        hours =
-            ""
-
-        minutes =
-            ""
-
-        seconds =
-            ""
-
-        output =
-            [ p [] [ text ("Hello " ++ model.name ++ "!") ]
-            , p [] [ text "You are:" ]
-            , p [] [ text (years ++ " years old") ]
-            , p [] [ text (months ++ " months old") ]
-            , p [] [ text (days ++ " days old") ]
-            , p [] [ text (hours ++ " hours old") ]
-            , p [] [ text (minutes ++ " minutes old") ]
-            , p [] [ text (seconds ++ " seconds old") ]
-            ]
     in
     div []
         (case model.birthday of
-            Just _ ->
+            Just bd ->
                 if not (String.isEmpty model.name) then
-                    form ++ output
+                    form ++ output model.name bd model.now
 
                 else
                     form
@@ -76,3 +62,38 @@ view model =
             Nothing ->
                 form
         )
+
+
+output : String -> Posix -> Posix -> List (Html msg)
+output nm bd now =
+    let
+        duration =
+            Time.posixToMillis now - Time.posixToMillis bd
+
+        seconds =
+            duration // 1000
+
+        minutes =
+            seconds // 60
+
+        hours =
+            seconds // 60
+
+        days =
+            hours // 24
+
+        months =
+            days // 30
+
+        years =
+            days // 365
+    in
+    [ p [] [ text ("Hello " ++ nm ++ "!") ]
+    , p [] [ text "You are:" ]
+    , p [] [ text (String.fromInt years ++ " years old") ]
+    , p [] [ text (String.fromInt months ++ " months old") ]
+    , p [] [ text (String.fromInt days ++ " days old") ]
+    , p [] [ text (String.fromInt hours ++ " hours old") ]
+    , p [] [ text (String.fromInt minutes ++ " minutes old") ]
+    , p [] [ text (String.fromInt seconds ++ " seconds old") ]
+    ]
