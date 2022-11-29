@@ -1,25 +1,37 @@
 module Main exposing (main)
 
+import Array
 import Browser
-import Html exposing (Html, div, input, label, p, text)
-import Html.Attributes exposing (for, name, type_)
+import Calendar
+import Clock
+import DateTime exposing (DateTime)
+import Html exposing (Attribute, Html, div, h2, input, label, p, text)
+import Html.Attributes exposing (for, name, type_, value)
+import Html.Events exposing (on, targetValue)
+import Json.Decode
+import String exposing (join, padLeft, split)
 import Task
-import Time exposing (Posix)
+import Time exposing (Month(..), Posix)
 
 
 type alias YourAge =
-    { name : String, birthday : Maybe Posix, now : Posix }
+    { name : String, birthday : Maybe DateTime, now : Posix }
 
 
 type Msg
     = UpdateCurrentTime Posix
-    | UpdateName
-    | UpdateBirthday
+    | UpdateName String
+    | UpdateBirthday String
 
 
 main : Program () YourAge Msg
 main =
-    Browser.element { init = init, subscriptions = subscriptions, update = update, view = view }
+    Browser.element
+        { init = init
+        , subscriptions = subscriptions
+        , update = update
+        , view = view
+        }
 
 
 init : () -> ( YourAge, Cmd Msg )
@@ -34,20 +46,104 @@ subscriptions _ =
     Time.every 1000 UpdateCurrentTime
 
 
-update : a -> YourAge -> ( YourAge, Cmd msg )
-update _ yb =
-    ( yb, Cmd.none )
+update : Msg -> YourAge -> ( YourAge, Cmd msg )
+update msg ya =
+    case msg of
+        UpdateCurrentTime now ->
+            ( { ya | now = now }, Cmd.none )
+
+        UpdateName name ->
+            ( { ya | name = name }, Cmd.none )
+
+        UpdateBirthday bd ->
+            ( { ya | birthday = isoStringToDateTime bd }, Cmd.none )
 
 
-view : YourAge -> Html.Html msg
+dateTimeToIsoString : DateTime -> String
+dateTimeToIsoString dt =
+    let
+        d =
+            DateTime.getDate dt
+    in
+    join "-"
+        [ Calendar.getYear d
+            |> String.fromInt
+            |> padLeft 4 '0'
+        , Calendar.getMonth d
+            |> Calendar.monthToInt
+            |> String.fromInt
+            |> padLeft 2 '0'
+        , Calendar.getDay d
+            |> String.fromInt
+            |> padLeft 2 '0'
+        ]
+
+
+isoStringToDateTime : String -> Maybe DateTime
+isoStringToDateTime =
+    let
+        parts =
+            split "-" >> List.filterMap String.toInt
+
+        partsTuple dt =
+            case parts dt of
+                [ y, m, d ] ->
+                    Array.get (m - 1) Calendar.months
+                        |> Maybe.map (\month -> ( y, month, d ))
+
+                _ ->
+                    Nothing
+
+        date ( y, m, d ) =
+            Calendar.fromRawParts
+                { year = y
+                , month = m
+                , day = d
+                }
+
+        dateTime dt =
+            let
+                time =
+                    0
+                        |> Time.millisToPosix
+                        |> Clock.fromPosix
+            in
+            DateTime.fromDateAndTime dt time
+    in
+    partsTuple
+        >> Maybe.andThen date
+        >> Maybe.map dateTime
+
+
+
+{- "onchange" listener for input elements -}
+
+
+onChange : (String -> msg) -> Attribute msg
+onChange tagger =
+    on "change" (Json.Decode.map tagger targetValue)
+
+
+view : YourAge -> Html.Html Msg
 view model =
     let
+        birthdayFormValue =
+            model.birthday
+                |> Maybe.map dateTimeToIsoString
+                |> Maybe.withDefault ""
+
         form =
             [ p [] [ text "Type your name and birthday" ]
             , label [ for "name" ] [ text "Name" ]
-            , input [ name "name" ] []
+            , input [ name "name", value model.name, onChange UpdateName ] []
             , label [ for "birthday" ] [ text "Birthday" ]
-            , input [ type_ "date", name "birthday" ] []
+            , input
+                [ type_ "date"
+                , name "birthday"
+                , value birthdayFormValue
+                , onChange UpdateBirthday
+                ]
+                []
             ]
     in
     div []
@@ -64,11 +160,11 @@ view model =
         )
 
 
-output : String -> Posix -> Posix -> List (Html msg)
+output : String -> DateTime -> Posix -> List (Html msg)
 output nm bd now =
     let
         duration =
-            Time.posixToMillis now - Time.posixToMillis bd
+            Time.posixToMillis now - Time.posixToMillis (DateTime.toPosix bd)
 
         seconds =
             duration // 1000
@@ -82,13 +178,13 @@ output nm bd now =
         days =
             hours // 24
 
-        months =
-            days // 30
-
         years =
             days // 365
+
+        months =
+            years * 12
     in
-    [ p [] [ text ("Hello " ++ nm ++ "!") ]
+    [ h2 [] [ text ("Hello " ++ nm ++ "!") ]
     , p [] [ text "You are:" ]
     , p [] [ text (String.fromInt years ++ " years old") ]
     , p [] [ text (String.fromInt months ++ " months old") ]
