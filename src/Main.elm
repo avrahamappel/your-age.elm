@@ -163,8 +163,11 @@ view model =
 output : String -> DateTime -> Posix -> List (Html msg)
 output nm bd now =
     let
+        _ =
+            Debug.log "now" now
+
         duration =
-            Time.posixToMillis now - Time.posixToMillis (DateTime.toPosix bd)
+            Time.posixToMillis now - Time.posixToMillis (DateTime.toPosix bd |> Debug.log "bd")
 
         seconds =
             duration // 1000
@@ -173,7 +176,7 @@ output nm bd now =
             seconds // 60
 
         hours =
-            seconds // 60
+            minutes // 60
 
         days =
             hours // 24
