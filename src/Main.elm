@@ -5,7 +5,7 @@ import Browser
 import Calendar
 import Clock
 import DateTime exposing (DateTime)
-import Html exposing (Attribute, Html, div, h2, input, label, p, text)
+import Html exposing (Attribute, Html, b, div, h2, input, label, p, text)
 import Html.Attributes exposing (for, name, type_, value)
 import Html.Events exposing (on, targetValue)
 import Json.Decode
@@ -189,10 +189,10 @@ output nm bd now =
     in
     [ h2 [] [ text ("Hello " ++ nm ++ "!") ]
     , p [] [ text "You are:" ]
-    , p [] [ text (String.fromInt years ++ " years old") ]
-    , p [] [ text (String.fromInt months ++ " months old") ]
-    , p [] [ text (String.fromInt days ++ " days old") ]
-    , p [] [ text (String.fromInt hours ++ " hours old") ]
-    , p [] [ text (String.fromInt minutes ++ " minutes old") ]
-    , p [] [ text (String.fromInt seconds ++ " seconds old") ]
+    , p [] [ b [] [ text (String.fromInt years) ], text " years old" ]
+    , p [] [ b [] [ text (String.fromInt months) ], text " months old" ]
+    , p [] [ b [] [ text (String.fromInt days) ], text " days old" ]
+    , p [] [ b [] [ text (String.fromInt hours) ], text " hours old" ]
+    , p [] [ b [] [ text (String.fromInt minutes) ], text " minutes old" ]
+    , p [] [ b [] [ text (String.fromInt seconds) ], text " seconds old" ]
     ]
