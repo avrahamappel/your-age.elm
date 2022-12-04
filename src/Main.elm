@@ -5,7 +5,7 @@ import Browser
 import Calendar
 import Clock
 import DateTime exposing (DateTime)
-import Html exposing (Attribute, Html, b, div, h2, input, label, p, text)
+import Html exposing (Attribute, Html, b, h2, input, label, p, text)
 import Html.Attributes exposing (for, name, type_, value)
 import Html.Events exposing (on, targetValue)
 import Json.Decode
@@ -26,7 +26,7 @@ type Msg
 
 main : Program () YourAge Msg
 main =
-    Browser.element
+    Browser.document
         { init = init
         , subscriptions = subscriptions
         , update = update
@@ -124,7 +124,7 @@ onChange tagger =
     on "change" (Json.Decode.map tagger targetValue)
 
 
-view : YourAge -> Html.Html Msg
+view : YourAge -> Browser.Document Msg
 view model =
     let
         birthdayFormValue =
@@ -146,8 +146,9 @@ view model =
                 []
             ]
     in
-    div []
-        (case model.birthday of
+    { title = "Your Age"
+    , body =
+        case model.birthday of
             Just bd ->
                 if not (String.isEmpty model.name) then
                     form ++ output model.name bd model.now
@@ -157,7 +158,7 @@ view model =
 
             Nothing ->
                 form
-        )
+    }
 
 
 output : String -> DateTime -> Posix -> List (Html msg)
