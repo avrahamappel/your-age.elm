@@ -14,7 +14,7 @@ import Task
 import Time exposing (Month(..), Posix)
 
 
-type alias YourAge =
+type alias Model =
     { name : String, birthday : Maybe DateTime, now : Posix }
 
 
@@ -24,7 +24,7 @@ type Msg
     | UpdateBirthday String
 
 
-main : Program () YourAge Msg
+main : Program () Model Msg
 main =
     Browser.document
         { init = init
@@ -34,19 +34,19 @@ main =
         }
 
 
-init : () -> ( YourAge, Cmd Msg )
+init : () -> ( Model, Cmd Msg )
 init _ =
     ( { name = "", birthday = Nothing, now = Time.millisToPosix 0 }
     , Task.perform UpdateCurrentTime Time.now
     )
 
 
-subscriptions : YourAge -> Sub Msg
+subscriptions : Model -> Sub Msg
 subscriptions _ =
     Time.every 1000 UpdateCurrentTime
 
 
-update : Msg -> YourAge -> ( YourAge, Cmd msg )
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg ya =
     case msg of
         UpdateCurrentTime now ->
@@ -124,7 +124,7 @@ onChange tagger =
     on "change" (Json.Decode.map tagger targetValue)
 
 
-view : YourAge -> Browser.Document Msg
+view : Model -> Browser.Document Msg
 view model =
     let
         birthdayFormValue =
@@ -164,11 +164,8 @@ view model =
 output : String -> DateTime -> Posix -> List (Html msg)
 output nm bd now =
     let
-        _ =
-            Debug.log "now" now
-
         duration =
-            Time.posixToMillis now - Time.posixToMillis (DateTime.toPosix bd |> Debug.log "bd")
+            Time.posixToMillis now - Time.posixToMillis (DateTime.toPosix bd)
 
         seconds =
             duration // 1000
@@ -190,10 +187,34 @@ output nm bd now =
     in
     [ h2 [] [ text ("Hello " ++ nm ++ "!") ]
     , p [] [ text "You are:" ]
-    , p [] [ b [] [ text (String.fromInt years) ], text " years old" ]
-    , p [] [ b [] [ text (String.fromInt months) ], text " months old" ]
-    , p [] [ b [] [ text (String.fromInt days) ], text " days old" ]
-    , p [] [ b [] [ text (String.fromInt hours) ], text " hours old" ]
-    , p [] [ b [] [ text (String.fromInt minutes) ], text " minutes old" ]
-    , p [] [ b [] [ text (String.fromInt seconds) ], text " seconds old" ]
+    , p [] [ b [] [ text (formattedNumber years) ], text " years old" ]
+    , p [] [ b [] [ text (formattedNumber months) ], text " months old" ]
+    , p [] [ b [] [ text (formattedNumber days) ], text " days old" ]
+    , p [] [ b [] [ text (formattedNumber hours) ], text " hours old" ]
+    , p [] [ b [] [ text (formattedNumber minutes) ], text " minutes old" ]
+    , p [] [ b [] [ text (formattedNumber seconds) ], text " seconds old" ]
     ]
+
+
+formattedNumber : Int -> String
+formattedNumber n =
+    n
+        |> String.fromInt
+        |> String.toList
+        |> List.reverse
+        |> chunks 3
+        |> List.intersperse [ ',' ]
+        |> List.foldr List.append []
+        |> List.reverse
+        |> String.fromList
+
+
+chunks : Int -> List a -> List (List a)
+chunks n xs =
+    (if List.length xs < n then
+        [ xs ]
+
+     else
+        List.take n xs :: (chunks n <| List.drop n xs)
+    )
+        |> List.filter (not << List.isEmpty)
