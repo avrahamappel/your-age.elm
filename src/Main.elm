@@ -12,6 +12,7 @@ import Json.Decode
 import String exposing (join, padLeft, split)
 import Task
 import Time exposing (Month(..), Posix)
+import Url
 
 
 type alias Model =
@@ -22,21 +23,45 @@ type Msg
     = UpdateCurrentTime Posix
     | UpdateName String
     | UpdateBirthday String
+    | None
 
 
 main : Program () Model Msg
 main =
-    Browser.document
+    Browser.application
         { init = init
         , subscriptions = subscriptions
         , update = update
         , view = view
+        , onUrlRequest = \_ -> None
+        , onUrlChange = \_ -> None
         }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { name = "", birthday = Nothing, now = Time.millisToPosix 0 }
+init : () -> Url.Url -> a -> ( Model, Cmd Msg )
+init _ url _ =
+    let
+        params =
+            url.query
+                |> Maybe.map (String.split "&" >> List.map (String.split "="))
+
+        getParam key =
+            params
+                |> Maybe.map
+                    (List.filter
+                        (List.head
+                            >> Maybe.map ((==) key)
+                            >> Maybe.withDefault False
+                        )
+                    )
+                |> Maybe.andThen List.head
+                |> Maybe.map (List.drop 1)
+                |> Maybe.andThen List.head
+    in
+    ( { name = getParam "name" |> Maybe.withDefault ""
+      , birthday = getParam "birthday" |> Maybe.andThen isoStringToDateTime
+      , now = Time.millisToPosix 0
+      }
     , Task.perform UpdateCurrentTime Time.now
     )
 
@@ -57,6 +82,9 @@ update msg ya =
 
         UpdateBirthday bd ->
             ( { ya | birthday = isoStringToDateTime bd }, Cmd.none )
+
+        None ->
+            ( ya, Cmd.none )
 
 
 dateTimeToIsoString : DateTime -> String
