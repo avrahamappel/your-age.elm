@@ -5,5 +5,6 @@ pkgs.mkShell {
     # Dependencies
     elmPackages.elm
     elmPackages.elm-format
+    elmPackages.elm-language-server
   ];
 }
