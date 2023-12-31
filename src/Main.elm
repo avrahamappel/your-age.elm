@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Array
 import Browser
+import Browser.Navigation as Nav
 import Calendar
 import Clock
 import DateTime exposing (DateTime)
@@ -12,10 +13,11 @@ import String exposing (join, padLeft, split)
 import Task
 import Time exposing (Month(..), Posix)
 import Url
+import Url.Builder as UB
 
 
 type alias Model =
-    { name : String, birthday : Maybe DateTime, now : Posix }
+    { name : String, birthday : Maybe DateTime, now : Posix, key : Nav.Key }
 
 
 type Msg
@@ -37,19 +39,19 @@ main =
         }
 
 
-init : () -> Url.Url -> a -> ( Model, Cmd Msg )
-init _ url _ =
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ url key =
     let
         params =
             url.query
                 |> Maybe.map (String.split "&" >> List.map (String.split "="))
 
-        getParam key =
+        getParam k =
             params
                 |> Maybe.map
                     (List.filter
                         (List.head
-                            >> Maybe.map ((==) key)
+                            >> Maybe.map ((==) k)
                             >> Maybe.withDefault False
                         )
                     )
@@ -60,6 +62,7 @@ init _ url _ =
     ( { name = getParam "name" |> Maybe.withDefault ""
       , birthday = getParam "birthday" |> Maybe.andThen isoStringToDateTime
       , now = Time.millisToPosix 0
+      , key = key
       }
     , Task.perform UpdateCurrentTime Time.now
     )
@@ -72,15 +75,28 @@ subscriptions _ =
 
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg ya =
+    let
+        updateQueryString n b =
+            Nav.replaceUrl ya.key
+                (UB.relative []
+                    (UB.string "name" n
+                        :: List.filterMap (Maybe.map (UB.string "birthday")) [ b ]
+                    )
+                )
+    in
     case msg of
         UpdateCurrentTime now ->
             ( { ya | now = now }, Cmd.none )
 
         UpdateName name ->
-            ( { ya | name = name }, Cmd.none )
+            ( { ya | name = name }
+            , updateQueryString name (Maybe.map dateTimeToIsoString ya.birthday)
+            )
 
         UpdateBirthday bd ->
-            ( { ya | birthday = isoStringToDateTime bd }, Cmd.none )
+            ( { ya | birthday = isoStringToDateTime bd }
+            , updateQueryString ya.name (Just bd)
+            )
 
         None ->
             ( ya, Cmd.none )
