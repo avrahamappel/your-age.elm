@@ -5,10 +5,9 @@ import Browser
 import Calendar
 import Clock
 import DateTime exposing (DateTime)
-import Html exposing (Attribute, Html, b, h2, input, label, p, text)
+import Html exposing (Html, b, h2, input, label, p, text)
 import Html.Attributes exposing (for, name, type_, value)
-import Html.Events exposing (on, targetValue)
-import Json.Decode
+import Html.Events exposing (onInput)
 import String exposing (join, padLeft, split)
 import Task
 import Time exposing (Month(..), Posix)
@@ -143,15 +142,6 @@ isoStringToDateTime =
         >> Maybe.map dateTime
 
 
-
-{- "onchange" listener for input elements -}
-
-
-onChange : (String -> msg) -> Attribute msg
-onChange tagger =
-    on "change" (Json.Decode.map tagger targetValue)
-
-
 view : Model -> Browser.Document Msg
 view model =
     let
@@ -163,13 +153,13 @@ view model =
         form =
             [ p [] [ text "Type your name and birthday" ]
             , label [ for "name" ] [ text "Name" ]
-            , input [ name "name", value model.name, onChange UpdateName ] []
+            , input [ name "name", value model.name, onInput UpdateName ] []
             , label [ for "birthday" ] [ text "Birthday" ]
             , input
                 [ type_ "date"
                 , name "birthday"
                 , value birthdayFormValue
-                , onChange UpdateBirthday
+                , onInput UpdateBirthday
                 ]
                 []
             ]
