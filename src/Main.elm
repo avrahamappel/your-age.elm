@@ -176,7 +176,15 @@ view model =
                 , div []
                     [ label [ for "name" ] [ text "Name" ]
                     , br [] []
-                    , input [ name "name", value model.name, onInput UpdateName ] []
+                    , input
+                        [ name "name"
+                        , value model.name
+                        , onInput UpdateName
+                        , style "margin" "2px"
+                        , style "height" "2em"
+                        , style "border" "0"
+                        ]
+                        []
                     ]
                 , br [] []
                 , div []
@@ -187,6 +195,9 @@ view model =
                         , name "birthday"
                         , value birthdayFormValue
                         , onInput UpdateBirthday
+                        , style "margin" "2px"
+                        , style "height" "2em"
+                        , style "border" "0"
                         ]
                         []
                     ]
@@ -195,27 +206,30 @@ view model =
     { title = "Your Age"
     , body =
         [ div
-            [ style "max-width" "300px"
-            , style "margin" "50px auto"
-            , style "padding" "5px 10px"
-            , style "background-color" "lightgrey"
+            [ style "max-width" "400px"
+            , style "margin" "0 auto"
             , style "font-family" "sans-serif"
             ]
-            ([ h1 [] [ text "Your Age" ]
-             , form
-             ]
-                ++ (case model.birthday of
-                        Just bd ->
-                            if not (String.isEmpty model.name) then
-                                output model.name bd model.now
+            [ h1 [] [ text "Your Age" ]
+            , div
+                [ style "width" "100%"
+                , style "padding" "10px"
+                , style "background-color" "lightgrey"
+                ]
+                (form
+                    :: (case model.birthday of
+                            Just bd ->
+                                if not (String.isEmpty model.name) then
+                                    output model.name bd model.now
 
-                            else
+                                else
+                                    []
+
+                            Nothing ->
                                 []
-
-                        Nothing ->
-                            []
-                   )
-            )
+                       )
+                )
+            ]
         ]
     }
 
@@ -252,8 +266,15 @@ output nm bd now =
     , p [] [ b [] [ text (formattedNumber hours) ], text " hours old" ]
     , p [] [ b [] [ text (formattedNumber minutes) ], text " minutes old" ]
     , p [] [ b [] [ text (formattedNumber seconds) ], text " seconds old" ]
-    , div []
-        [ button [ onClick Reset ] [ text "Reset" ]
+    , div [ style "margin" "0 auto" ]
+        [ button
+            [ style "display" "block"
+            , style "height" "2em"
+            , style "border" "0"
+            , style "background-color" "white"
+            , onClick Reset
+            ]
+            [ text "Reset" ]
 
         -- , button [ onClick None ] [ text "Share" ]
         ]
