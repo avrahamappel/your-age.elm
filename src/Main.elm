@@ -6,8 +6,8 @@ import Browser.Navigation as Nav
 import Calendar
 import Clock
 import DateTime exposing (DateTime)
-import Html exposing (Html, b, h2, input, label, p, text)
-import Html.Attributes exposing (for, name, type_, value)
+import Html exposing (Html, b, br, div, h1, h2, input, label, p, text)
+import Html.Attributes exposing (for, name, style, type_, value)
 import Html.Events exposing (onInput)
 import String exposing (join, padLeft, split)
 import Task
@@ -167,31 +167,52 @@ view model =
                 |> Maybe.withDefault ""
 
         form =
-            [ p [] [ text "Type your name and birthday" ]
-            , label [ for "name" ] [ text "Name" ]
-            , input [ name "name", value model.name, onInput UpdateName ] []
-            , label [ for "birthday" ] [ text "Birthday" ]
-            , input
-                [ type_ "date"
-                , name "birthday"
-                , value birthdayFormValue
-                , onInput UpdateBirthday
+            div []
+                [ p [] [ text "Enter your name and birthday:" ]
+                , div []
+                    [ label [ for "name" ] [ text "Name" ]
+                    , br [] []
+                    , input [ name "name", value model.name, onInput UpdateName ] []
+                    ]
+                , br [] []
+                , div []
+                    [ label [ for "birthday" ] [ text "Birthday" ]
+                    , br [] []
+                    , input
+                        [ type_ "date"
+                        , name "birthday"
+                        , value birthdayFormValue
+                        , onInput UpdateBirthday
+                        ]
+                        []
+                    ]
                 ]
-                []
-            ]
     in
     { title = "Your Age"
     , body =
-        case model.birthday of
-            Just bd ->
-                if not (String.isEmpty model.name) then
-                    form ++ output model.name bd model.now
+        [ div
+            [ style "max-width" "300px"
+            , style "margin" "50px auto"
+            , style "padding" "5px 10px"
+            , style "background-color" "lightgrey"
+            , style "font-family" "sans-serif"
+            ]
+            ([ h1 [] [ text "Your Age" ]
+             , form
+             ]
+                ++ (case model.birthday of
+                        Just bd ->
+                            if not (String.isEmpty model.name) then
+                                output model.name bd model.now
 
-                else
-                    form
+                            else
+                                []
 
-            Nothing ->
-                form
+                        Nothing ->
+                            []
+                   )
+            )
+        ]
     }
 
 
