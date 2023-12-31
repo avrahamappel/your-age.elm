@@ -6,9 +6,9 @@ import Browser.Navigation as Nav
 import Calendar
 import Clock
 import DateTime exposing (DateTime)
-import Html exposing (Html, b, br, div, h1, h2, input, label, p, text)
+import Html exposing (Html, b, br, button, div, h1, h2, input, label, p, text)
 import Html.Attributes exposing (for, name, style, type_, value)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import String exposing (join, padLeft, split)
 import Task
 import Time exposing (Month(..), Posix)
@@ -24,6 +24,7 @@ type Msg
     = UpdateCurrentTime Posix
     | UpdateName String
     | UpdateBirthday String
+    | Reset
     | None
 
 
@@ -97,6 +98,9 @@ update msg ya =
             ( { ya | birthday = isoStringToDateTime bd }
             , updateQueryString ya.name (Just bd)
             )
+
+        Reset ->
+            ( { ya | name = "", birthday = Nothing }, Cmd.none )
 
         None ->
             ( ya, Cmd.none )
@@ -216,7 +220,7 @@ view model =
     }
 
 
-output : String -> DateTime -> Posix -> List (Html msg)
+output : String -> DateTime -> Posix -> List (Html Msg)
 output nm bd now =
     let
         duration =
@@ -248,6 +252,11 @@ output nm bd now =
     , p [] [ b [] [ text (formattedNumber hours) ], text " hours old" ]
     , p [] [ b [] [ text (formattedNumber minutes) ], text " minutes old" ]
     , p [] [ b [] [ text (formattedNumber seconds) ], text " seconds old" ]
+    , div []
+        [ button [ onClick Reset ] [ text "Reset" ]
+
+        -- , button [ onClick None ] [ text "Share" ]
+        ]
     ]
 
 
