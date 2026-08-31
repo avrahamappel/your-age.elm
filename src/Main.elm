@@ -256,7 +256,7 @@ output nm bd now =
             days // 365
 
         months =
-            years * 12
+            days // 30
     in
     [ h2 [] [ text ("Hello " ++ nm ++ "!") ]
     , p [] [ text "You are:" ]
